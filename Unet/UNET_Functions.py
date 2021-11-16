@@ -2,7 +2,7 @@
 """
 Spyder Editor
 
-This is a temporary script file.
+This is a script file called by Contrail_Unet.ipynb
 """
 import tensorflow as tf
 import os
