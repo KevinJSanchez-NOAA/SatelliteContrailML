@@ -225,10 +225,8 @@ def parse_tfr_element(element):
 
     content = tf.io.parse_single_example(element, data)
 
-    height = 1024#content['height']
-    print('h = ', height)
+    height = content['height']
     width = content['width']
-    width = 1024*2
     depth = content['depth']
     raw_label = content['raw_label']
     raw_image = content['raw_image']

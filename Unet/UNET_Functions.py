@@ -18,6 +18,7 @@ from tensorflow.keras.layers import MaxPooling2D
 from tensorflow.keras.layers import Dropout 
 from tensorflow.keras.layers import Conv2DTranspose
 from tensorflow.keras.layers import concatenate
+from tensorflow.keras.layers import Softmax
 
 
 
@@ -40,12 +41,12 @@ def conv_block(inputs=None, n_filters=32, dropout_prob=0, max_pooling=True):
     ### START CODE HERE
     conv = Conv2D(n_filters, # Number of filters
                   3,   # Kernel size   
-                  activation='relu',
+                  activation='sigmoid',
                   padding='same',
                   kernel_initializer='he_normal')(inputs)
     conv = Conv2D(n_filters, # Number of filters
                   3,   # Kernel size
-                  activation='relu',
+                  activation='sigmoid',
                   padding='same',
                   kernel_initializer='he_normal')(conv)
     ### END CODE HERE
@@ -93,12 +94,12 @@ def upsampling_block(expansive_input, contractive_input, n_filters=32):
     merge = concatenate([up, contractive_input], axis=3)
     conv = Conv2D(n_filters,   # Number of filters
                  3,     # Kernel size
-                 activation='relu',
+                 activation='sigmoid',
                  padding='same',
                  kernel_initializer='he_normal')(merge)
     conv = Conv2D(n_filters,  # Number of filters
                  3,   # Kernel size
-                 activation='relu',
+                 activation='sigmoid',
                  padding='same',
                  kernel_initializer='he_normal')(conv)
     ### END CODE HERE
@@ -125,9 +126,9 @@ def unet_model(input_size=(96, 128, 3), n_filters=32, n_classes=8):
     # Double the number of filters at each new step
     cblock2 = conv_block(cblock1[0], n_filters*2)
     cblock3 = conv_block(cblock2[0], n_filters*2*2)
-    cblock4 = conv_block(cblock3[0], n_filters*2*2*2, 0.3) # Include a dropout of 0.3 for this layer
+    cblock4 = conv_block(cblock3[0], n_filters*2*2*2, 0.2) # Include a dropout of 0.3 for this layer
     # Include a dropout of 0.3 for this layer, and avoid the max_pooling layer
-    cblock5 = conv_block(cblock4[0], n_filters*2*2*2*2, 0.3, max_pooling=None) 
+    cblock5 = conv_block(cblock4[0], n_filters*2*2*2*2, 0.2, max_pooling=None) 
     ### END CODE HERE
     
     # Expanding Path (decoding)
@@ -145,16 +146,18 @@ def unet_model(input_size=(96, 128, 3), n_filters=32, n_classes=8):
 
     conv9 = Conv2D(n_filters,
                  3,
-                 activation='relu',
+                 activation='sigmoid',
                  padding='same',
                  kernel_initializer='he_normal')(ublock9)
 
     # Add a Conv2D layer with n_classes filter, kernel size of 1 and a 'same' padding
     ### START CODE HERE
     conv10 = Conv2D(n_classes, kernel_size=1, padding='same')(conv9)
+    #conv10 = Conv2D(n_classes, kernel_size=1, padding='same', activation='softmax')(conv9)
     ### END CODE HERE
-    
-    model = tf.keras.Model(inputs=inputs, outputs=conv10)
+
+    model = tf.keras.Model(inputs=inputs, outputs=tf.math.sigmoid(tf.squeeze(conv10,3)))
+    #model = tf.keras.Model(inputs=inputs, outputs=tf.cast(tf.argmax(conv10, axis=-1),tf.float64))
 
     return model
 
