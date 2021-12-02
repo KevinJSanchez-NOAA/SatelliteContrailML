@@ -41,14 +41,14 @@ def conv_block(inputs=None, n_filters=32, dropout_prob=0, max_pooling=True):
     ### START CODE HERE
     conv = Conv2D(n_filters, # Number of filters
                   3,   # Kernel size   
-                  activation='sigmoid',
                   padding='same',
                   kernel_initializer='he_normal')(inputs)
+    conv=tf.keras.layers.LeakyReLU(alpha=0.3)(conv)
     conv = Conv2D(n_filters, # Number of filters
                   3,   # Kernel size
-                  activation='sigmoid',
                   padding='same',
                   kernel_initializer='he_normal')(conv)
+    conv=tf.keras.layers.LeakyReLU(alpha=0.3)(conv)
     ### END CODE HERE
     
     # if dropout_prob > 0 add a dropout layer, with the variable dropout_prob as parameter
@@ -94,14 +94,14 @@ def upsampling_block(expansive_input, contractive_input, n_filters=32):
     merge = concatenate([up, contractive_input], axis=3)
     conv = Conv2D(n_filters,   # Number of filters
                  3,     # Kernel size
-                 activation='sigmoid',
                  padding='same',
                  kernel_initializer='he_normal')(merge)
+    conv=tf.keras.layers.LeakyReLU(alpha=0.3)(conv)
     conv = Conv2D(n_filters,  # Number of filters
                  3,   # Kernel size
-                 activation='sigmoid',
                  padding='same',
                  kernel_initializer='he_normal')(conv)
+    conv=tf.keras.layers.LeakyReLU(alpha=0.3)(conv)
     ### END CODE HERE
     
     return conv
@@ -146,9 +146,9 @@ def unet_model(input_size=(96, 128, 3), n_filters=32, n_classes=8):
 
     conv9 = Conv2D(n_filters,
                  3,
-                 activation='sigmoid',
                  padding='same',
                  kernel_initializer='he_normal')(ublock9)
+    conv9 = tf.keras.layers.LeakyReLU(alpha=0.3)(conv9)
 
     # Add a Conv2D layer with n_classes filter, kernel size of 1 and a 'same' padding
     ### START CODE HERE
@@ -156,7 +156,7 @@ def unet_model(input_size=(96, 128, 3), n_filters=32, n_classes=8):
     #conv10 = Conv2D(n_classes, kernel_size=1, padding='same', activation='softmax')(conv9)
     ### END CODE HERE
 
-    model = tf.keras.Model(inputs=inputs, outputs=tf.math.sigmoid(tf.squeeze(conv10,3)))
+    model = tf.keras.Model(inputs=inputs, outputs=tf.keras.activations.sigmoid(tf.squeeze(conv10,3)))
     #model = tf.keras.Model(inputs=inputs, outputs=tf.cast(tf.argmax(conv10, axis=-1),tf.float64))
 
     return model

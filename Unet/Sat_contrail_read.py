@@ -34,7 +34,7 @@ def Extract_RawDef(AUX_list):
 #        tmp[0, 0:x.shape[0], 0:x.shape[1]] += x
 #    return tmp
 
-def extract_imglist(image_path):
+def extract_imglist(image_path, NEWMASK, NCHANNELS):
     
     #Black_list = ['2018MYD/109/A2018109.1540']
     image0065 = glob.glob(image_path + "/**/01__1km.raw", recursive = True)
@@ -46,6 +46,8 @@ def extract_imglist(image_path):
     image1330 = glob.glob(image_path + "/**/33__1km.raw", recursive = True)
     AUX_list = glob.glob(image_path + "/**/01__1km.AUX", recursive = True)
     mask_list = glob.glob(image_path + "/**/*.contrail-mask", recursive = True)
+    if NEWMASK:
+        mask_list = glob.glob(image_path + "/**/*.contrail-maskUpdate", recursive = True)
     mask_list = [ x for x in mask_list if "_sw" not in x ]
 
     #exclude granuls with missing files
@@ -60,6 +62,8 @@ def extract_imglist(image_path):
             gg = exists(x[0]+'/33__1km.raw')
             hh = exists(x[0]+'/01__1km.AUX')
             masks = glob.glob(x[0]+'/*.contrail-mask')
+            if NEWMASK:
+                masks = glob.glob(x[0]+'/*.contrail-maskUpdate')
             ii = 0
             ii = [1 for s in masks if "_sw" not in s]
             if not (aa and bb and cc and dd and ee and ff and gg and hh and ii):
@@ -67,11 +71,13 @@ def extract_imglist(image_path):
                 image0380 = [s for s in image0380 if x[0] not in s]
                 image0680 = [s for s in image0680 if x[0] not in s]
                 image0850 = [s for s in image0850 if x[0] not in s]
+                image1330 = [s for s in image1330 if x[0] not in s]
                 image1100 = [s for s in image1100 if x[0] not in s]
                 image1200 = [s for s in image1200 if x[0] not in s]
-                image1330 = [s for s in image1330 if x[0] not in s]
                 AUX_list = [s for s in AUX_list if x[0] not in s]
                 mask_list = [s for s in mask_list if x[0] not in s]
+                
+
 
     return image0065, image0380, image0680, image0850, image1100, image1200, image1330, AUX_list, mask_list
 
