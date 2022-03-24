@@ -12,16 +12,10 @@ import imageio
 import matplotlib.pyplot as plt
 
 from termcolor import colored
-from tensorflow.keras.layers import Input
-from tensorflow.keras.layers import Conv2D
-from tensorflow.keras.layers import MaxPooling2D
-from tensorflow.keras.layers import Dropout 
-from tensorflow.keras.layers import Conv2DTranspose
-from tensorflow.keras.layers import concatenate
-from tensorflow.keras.layers import Softmax
-
-
-
+from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, Dropout, Conv2DTranspose, concatenate, Softmax
+from tensorflow.keras.applications import vgg16
+from tensorflow.keras.models import Model,load_model
+from tensorflow.keras.callbacks import EarlyStopping,ModelCheckpoint
 
 
 
@@ -38,7 +32,7 @@ def conv_block(inputs=None, n_filters=32, dropout_prob=0, max_pooling=True):
         next_layer, skip_connection --  Next layer and skip connection outputs
     """
 
-
+    ### START CODE HERE
     conv = Conv2D(n_filters, # Number of filters
                   3,   # Kernel size   
                   padding='same',
@@ -49,20 +43,20 @@ def conv_block(inputs=None, n_filters=32, dropout_prob=0, max_pooling=True):
                   padding='same',
                   kernel_initializer='he_normal')(conv)
     conv=tf.keras.layers.LeakyReLU(alpha=0.3)(conv)
-
+    ### END CODE HERE
     
     # if dropout_prob > 0 add a dropout layer, with the variable dropout_prob as parameter
     if dropout_prob > 0:
-
+         ### START CODE HERE
         conv = Dropout(dropout_prob)(conv)
-
+         ### END CODE HERE
          
         
     # if max_pooling is True add a MaxPooling2D with 2x2 pool_size
     if max_pooling:
-
+        ### START CODE HERE
         next_layer = MaxPooling2D(pool_size = 2)(conv)
-
+        ### END CODE HERE
         
     else:
         next_layer = conv
@@ -83,7 +77,7 @@ def upsampling_block(expansive_input, contractive_input, n_filters=32):
         conv -- Tensor output
     """
     
-
+    ### START CODE HERE
     up = Conv2DTranspose(
                  n_filters,    # number of filters
                  3,    # Kernel size
@@ -102,7 +96,7 @@ def upsampling_block(expansive_input, contractive_input, n_filters=32):
                  padding='same',
                  kernel_initializer='he_normal')(conv)
     conv=tf.keras.layers.LeakyReLU(alpha=0.3)(conv)
-
+    ### END CODE HERE
     
     return conv
 
@@ -117,10 +111,30 @@ def unet_model(input_size=(96, 128, 3), n_filters=32, n_classes=8):
     Returns: 
         model -- tf.keras.Model
     """
+
+    VGG16_weight = "/home/kjsanche/Desktop/ExternalSSD/SatContrailData/pretrained_models/vgg16_weights_tf_dim_ordering_tf_kernels_notop.h5"
+    VGG16 = vgg16.VGG16(include_top=False, weights=VGG16_weight, input_shape=input_size)
+    output_ = VGG16.output
+    
+    set_trainable = False
+    for layer in VGG16.layers:
+        if layer.name in ['block1_conv1']:
+            set_trainable = True
+        if layer.name in ['block1_pool','block2_pool','block3_pool','block4_pool','block5_pool']:
+            layer.trainable = False
+
+    vgg_model = Model(VGG16.input, output_)
+    layers = [(layer, layer.name, layer.trainable) for layer in vgg_model.layers]
+    #pd.DataFrame(layers, columns=['Layer Type', 'Layer Name', 'Layer Trainable'])
+    K.clear_session()
+    
+    
+    
+    
     inputs = Input(input_size)
     # Contracting Path (encoding)
     # Add a conv_block with the inputs of the unet_ model and n_filters
-
+    ### START CODE HERE
     cblock1 = conv_block(inputs, n_filters)
     # Chain the first element of the output of each block to be the input of the next conv_block. 
     # Double the number of filters at each new step
@@ -129,12 +143,12 @@ def unet_model(input_size=(96, 128, 3), n_filters=32, n_classes=8):
     cblock4 = conv_block(cblock3[0], n_filters*2*2*2, 0.2) # Include a dropout of 0.3 for this layer
     # Include a dropout of 0.3 for this layer, and avoid the max_pooling layer
     cblock5 = conv_block(cblock4[0], n_filters*2*2*2*2, 0.2, max_pooling=None) 
-
+    ### END CODE HERE
     
     # Expanding Path (decoding)
     # Add the first upsampling_block.
     # Use the cblock5[0] as expansive_input and cblock4[1] as contractive_input and n_filters * 8
-
+    ### START CODE HERE
     ublock6 = upsampling_block(cblock5[0], cblock4[1],  n_filters*8)
     # Chain the output of the previous block as expansive_input and the corresponding contractive block output.
     # Note that you must use the second element of the contractive block i.e before the maxpooling layer. 
@@ -142,7 +156,7 @@ def unet_model(input_size=(96, 128, 3), n_filters=32, n_classes=8):
     ublock7 = upsampling_block(ublock6, cblock3[1],  n_filters*8/2)
     ublock8 = upsampling_block(ublock7, cblock2[1],  n_filters*8/2/2)
     ublock9 = upsampling_block(ublock8, cblock1[1],  n_filters*8/2/2/2)
-
+    ### END CODE HERE
 
     conv9 = Conv2D(n_filters,
                  3,
@@ -151,10 +165,10 @@ def unet_model(input_size=(96, 128, 3), n_filters=32, n_classes=8):
     conv9 = tf.keras.layers.LeakyReLU(alpha=0.3)(conv9)
 
     # Add a Conv2D layer with n_classes filter, kernel size of 1 and a 'same' padding
-
+    ### START CODE HERE
     conv10 = Conv2D(n_classes, kernel_size=1, padding='same')(conv9)
     #conv10 = Conv2D(n_classes, kernel_size=1, padding='same', activation='softmax')(conv9)
-
+    ### END CODE HERE
 
     model = tf.keras.Model(inputs=inputs, outputs=tf.keras.activations.sigmoid(tf.squeeze(conv10,3)))
     #model = tf.keras.Model(inputs=inputs, outputs=tf.cast(tf.argmax(conv10, axis=-1),tf.float64))
