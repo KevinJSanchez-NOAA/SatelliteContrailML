@@ -39,7 +39,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-from numpy import *
+from numpy import * #fix this!
 import sys  # maxsize
 import tensorflow as tf
 import tqdm
@@ -208,7 +208,7 @@ def parse_single_image(image, label):
         'raw_label' : _bytes_feature(serialize_array(label))
     }
     #create an Example, wrapping the single features
-    out = tf.train.Example(features=tf.train.Features(feature=data)) ################## PROBLEM HERE?
+    out = tf.train.Example(features=tf.train.Features(feature=data))
 
     return out
 
@@ -220,6 +220,7 @@ def parse_tfr_element(element):
       'depth':tf.io.FixedLenFeature([], tf.int64),
       'raw_label':tf.io.FixedLenFeature([], tf.string),#tf.string = bytestring (not text string)
       'raw_image' : tf.io.FixedLenFeature([], tf.string),#tf.string = bytestring (not text string)
+
     }
 
 

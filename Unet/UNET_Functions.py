@@ -6,10 +6,10 @@ This is a script file called by Contrail_Unet.ipynb
 """
 import tensorflow as tf
 import os
-import numpy as np # linear algebra
-import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
-import imageio
-import matplotlib.pyplot as plt
+#import numpy as np # linear algebra
+#import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
+#import imageio
+#import matplotlib.pyplot as plt
 
 from termcolor import colored
 from tensorflow.keras.layers import Input
@@ -19,6 +19,8 @@ from tensorflow.keras.layers import Dropout
 from tensorflow.keras.layers import Conv2DTranspose
 from tensorflow.keras.layers import concatenate
 from tensorflow.keras.layers import Softmax
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.layers import UpSampling2D
 
 
 
@@ -40,16 +42,17 @@ def conv_block(inputs=None, n_filters=32, dropout_prob=0, max_pooling=True):
 
 
     conv = Conv2D(n_filters, # Number of filters
-                  3,   # Kernel size   
+                  3,   # Kernel size 
+                  activation='relu',
                   padding='same',
                   kernel_initializer='he_normal')(inputs)
-    conv=tf.keras.layers.LeakyReLU(alpha=0.3)(conv)
+    conv = BatchNormalization()(conv)
     conv = Conv2D(n_filters, # Number of filters
                   3,   # Kernel size
+                  activation='relu',
                   padding='same',
                   kernel_initializer='he_normal')(conv)
-    conv=tf.keras.layers.LeakyReLU(alpha=0.3)(conv)
-
+    conv = BatchNormalization()(conv)
     
     # if dropout_prob > 0 add a dropout layer, with the variable dropout_prob as parameter
     if dropout_prob > 0:
@@ -82,7 +85,7 @@ def upsampling_block(expansive_input, contractive_input, n_filters=32):
     Returns: 
         conv -- Tensor output
     """
-    
+
 
     up = Conv2DTranspose(
                  n_filters,    # number of filters
@@ -94,14 +97,59 @@ def upsampling_block(expansive_input, contractive_input, n_filters=32):
     merge = concatenate([up, contractive_input], axis=3)
     conv = Conv2D(n_filters,   # Number of filters
                  3,     # Kernel size
+                 activation='relu',
                  padding='same',
                  kernel_initializer='he_normal')(merge)
-    conv=tf.keras.layers.LeakyReLU(alpha=0.3)(conv)
+
+    conv = BatchNormalization()(conv)
     conv = Conv2D(n_filters,  # Number of filters
                  3,   # Kernel size
+                 activation='relu',
                  padding='same',
                  kernel_initializer='he_normal')(conv)
-    conv=tf.keras.layers.LeakyReLU(alpha=0.3)(conv)
+
+    conv = BatchNormalization()(conv)
+
+    
+    return conv
+def upsampling_blockv2(expansive_input, contractive_input, n_filters=32):
+    """
+    Convolutional upsampling block
+    
+    Arguments:
+        expansive_input -- Input tensor from previous layer
+        contractive_input -- Input tensor from previous skip layer
+        n_filters -- Number of filters for the convolutional layers
+    Returns: 
+        conv -- Tensor output
+    """
+
+
+    up = UpSampling2D()(expansive_input)
+    up = Conv2D(n_filters, 2,  padding='same')(up)
+
+    #Conv2DTranspose(
+    #             n_filters,    # number of filters
+    #             3,    # Kernel size
+    #             strides=2,
+    #             padding='same')(expansive_input)
+    
+    # Merge the previous output and the contractive_input
+    merge = concatenate([up, contractive_input], axis=3)
+    conv = Conv2D(n_filters,   # Number of filters
+                 3,     # Kernel size
+                 activation='relu',
+                 padding='same',
+                 kernel_initializer='he_normal')(merge)
+
+    conv = BatchNormalization()(conv)
+    conv = Conv2D(n_filters,  # Number of filters
+                 3,   # Kernel size
+                 activation='relu',
+                 padding='same',
+                 kernel_initializer='he_normal')(conv)
+
+    conv = BatchNormalization()(conv)
 
     
     return conv
@@ -118,47 +166,46 @@ def unet_model(input_size=(96, 128, 3), n_filters=32, n_classes=8):
         model -- tf.keras.Model
     """
     inputs = Input(input_size)
+
     # Contracting Path (encoding)
     # Add a conv_block with the inputs of the unet_ model and n_filters
-
     cblock1 = conv_block(inputs, n_filters)
     # Chain the first element of the output of each block to be the input of the next conv_block. 
     # Double the number of filters at each new step
     cblock2 = conv_block(cblock1[0], n_filters*2)
     cblock3 = conv_block(cblock2[0], n_filters*2*2)
-    cblock4 = conv_block(cblock3[0], n_filters*2*2*2, 0.2) # Include a dropout of 0.3 for this layer
-    # Include a dropout of 0.3 for this layer, and avoid the max_pooling layer
-    cblock5 = conv_block(cblock4[0], n_filters*2*2*2*2, 0.2, max_pooling=None) 
-
+    cblock4 = conv_block(cblock3[0], n_filters*2*2*2, dropout_prob=0)
+    #cblock4 = conv_block(cblock3[0], n_filters*2*2*2, dropout_prob=0.5,max_pooling=None)
+    # Include a dropout of 0.5 for this layer, and avoid the max_pooling layer
+    cblock5 = conv_block(cblock4[0], n_filters*2*2*2*2, dropout_prob=0.5, max_pooling=None)
     
     # Expanding Path (decoding)
     # Add the first upsampling_block.
     # Use the cblock5[0] as expansive_input and cblock4[1] as contractive_input and n_filters * 8
 
-    ublock6 = upsampling_block(cblock5[0], cblock4[1],  n_filters*8)
+    ublock6 = upsampling_blockv2(cblock5[0], cblock4[1],  n_filters*8)
+    
     # Chain the output of the previous block as expansive_input and the corresponding contractive block output.
     # Note that you must use the second element of the contractive block i.e before the maxpooling layer. 
-    # At each step, use half the number of filters of the previous block 
-    ublock7 = upsampling_block(ublock6, cblock3[1],  n_filters*8/2)
-    ublock8 = upsampling_block(ublock7, cblock2[1],  n_filters*8/2/2)
-    ublock9 = upsampling_block(ublock8, cblock1[1],  n_filters*8/2/2/2)
-
-
+    # At each step, use half the number of filters of the previous block
+    #ublock7 = upsampling_blockv2(cblock4[0], cblock3[1],  n_filters*8/2)
+    ublock7 = upsampling_blockv2(ublock6, cblock3[1],  n_filters*8/2)
+    ublock8 = upsampling_blockv2(ublock7, cblock2[1],  n_filters*8/2/2)
+    ublock9 = upsampling_blockv2(ublock8, cblock1[1],  n_filters*8/2/2/2)
+    
     conv9 = Conv2D(n_filters,
-                 3,
-                 padding='same',
-                 kernel_initializer='he_normal')(ublock9)
-    conv9 = tf.keras.layers.LeakyReLU(alpha=0.3)(conv9)
-
+             3,
+             activation='relu',
+             padding='same',
+             kernel_initializer='he_normal')(ublock9)
+    conv9 = BatchNormalization()(conv9)
     # Add a Conv2D layer with n_classes filter, kernel size of 1 and a 'same' padding
-
     conv10 = Conv2D(n_classes, kernel_size=1, padding='same')(conv9)
-    #conv10 = Conv2D(n_classes, kernel_size=1, padding='same', activation='softmax')(conv9)
-
 
     model = tf.keras.Model(inputs=inputs, outputs=tf.keras.activations.sigmoid(tf.squeeze(conv10,3)))
-    #model = tf.keras.Model(inputs=inputs, outputs=tf.cast(tf.argmax(conv10, axis=-1),tf.float64))
 
+
+   
     return model
 
 def display(display_list):
