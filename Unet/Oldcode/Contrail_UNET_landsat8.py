@@ -80,9 +80,9 @@ print(len(training_filenames))
 print(len(validation_filenames))
 
 
-account_sid = 'ACe04b332ed3f99aa10895372bd8ea5034'#config('ACCOUNT_ID',default='')
-auth_token = '83a01a63442a4dfb5a3d6ec1bf92abba'#config('AUTHENTICATION_TOKEN',default='')
-phone_num = '3019741551'#config('PHONE_NUMBER',default='')
+account_sid = ''#config('ACCOUNT_ID',default='')
+auth_token = ''#config('AUTHENTICATION_TOKEN',default='')
+phone_num = ''#config('PHONE_NUMBER',default='')
 client = Client(account_sid, auth_token)
 
 #message = client.messages .create(
