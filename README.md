@@ -32,7 +32,7 @@ When I started this project, it quickly became clear that detecting contrails wi
 
 In addition, I could experiment with more complex CNN architectures (other than a standard Unet), but it is unclear to me that this will create significant improvement. Another approach requiring a new dataset would be to use a time series of images (from a geostationary satellite) to track contrails as they changed from easily identifiable lines to less defined lines. I will not attempt to label such a dataset again by myself...
 
-## What I should do better
+## What I could do better
 I have preprocessing of the data and training of the model completely separate (2 scripts). I do not think preprocessing in parallel with training is reasonable, as preprocessing takes a few hours (longer than an epoch) and would drastically lengthen the training processes. Therefore, keeping the two processes separate is useful since preprocessing would only need to be performed once (unless I want to change hyperparameters in the preprocessing (i.e., how I balance the data)). I could look into ways to improve the efficiency of the preprocessing, in which case preprocessing in parallel with training could work. I should at least create a batch file to run the preprocessing code (if necessary) and then train the model.
 
 ## Sources
