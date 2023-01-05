@@ -25,6 +25,7 @@ The best model test IOU = 0.34, which is low compared to the standards of many c
 
 ## What I could try next
 When I started this project, it quickly became clear that detecting contrails with machine learning would be very difficult because human observers struggle to confidently identify contrails. If we, the human, cannot do it well, then the model will surely also have a hard time. In my training and testing of the model, I overlooked that the human labelers had more information than I gave the model. As I mentioned in the "Creating/Finding Labeled data for training" section, the labelers had "advected aircraft trajectories" to show where contrails could be (if they formed) based on aircraft flight paths to improve their confidence when labeling a cloud as a contrail. The model would undoubtedly benefit from having this information in the form of another channel. This will mean we cannot detect contrails in (near) real-time since the advected aircraft trajectories require reanalysis windspeed data, but that is not necessary for our purpose of validating forecasting models. 
+
 In addition, I could experiment with more complex CNN architectures (other than a standard Unet), but it is unclear to me that this will create significant improvement. Another approach requiring a new dataset would be to use a time series of images (from a geostationary satellite) to track contrails as they changed from easily identifiable lines to less defined lines. I will not attempt to label such a dataset again by myself...
 
 ## What I should do better
@@ -32,6 +33,7 @@ I have preprocessing of the data and training of the model completely separate (
 
 ## Sources
 Mannstein, Hermann, Richard Meyer, and Peter Wendling, "Operational detection of contrails from NOAA-AVHRR-data", International Journal of Remote Sensing 20.8 (1999): 1641-1660.
+
 McCloskey, Kevin, Scott Geraedts, Brendan Jackman, Vincent R. Meijer, Erica Brand, Dave Fork, John C. Platt, Carl Elkin, and Christopher Van Arsdale. "A human-labeled Landsat-8 contrails dataset", https://www.climatechange.ai/papers/icml2021/2
 
 
