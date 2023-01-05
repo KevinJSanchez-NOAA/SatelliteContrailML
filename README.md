@@ -3,7 +3,9 @@
 Label contrails pixel-by-pixel (semantic segmentation) from satellite images for the purpose of validating forecasting models (Models that forecast where contrails can form). The resulting labeled images had two classes (binary), 1. contrail, 2. not a contrail (or everything else).
 
 ## Summary of project
-This project was mainly meant for me to experiment with applying a CNN to a large dataset. As the title states, I aimed to automate the detection of contrails from satellite images with a Unet. Before this project, I had taken Andrew Ngs online machine learning specialization course and implemented a Unet, but it was all spoon-fed to me, the student, so relatively quick and easy. Upon implementing a Unet on my contrail dataset, I quickly ran into problems that were not covered in the class. Here I list some of the challenges that I had to overcome for this project:
+This project was mainly meant for me to experiment with applying a CNN to a large dataset. As the title states, I aimed to automate the detection of contrails from satellite images with a Unet. Before this project, I had taken Andrew Ngs online machine learning specialization course and implemented a Unet, but it was all spoon-fed to me, the student, so relatively quick and easy. Upon implementing a Unet on my contrail dataset, I quickly ran into problems that were not covered in the class. 
+
+Here I list some of the challenges that I had to overcome for this project:
 
 1. Creating/Finding Labeled data for training
 
