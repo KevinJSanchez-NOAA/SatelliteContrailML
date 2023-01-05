@@ -19,7 +19,7 @@ The dataset is highly unbalanced as only 0-~2% of pixels often represented contr
 
 ## Results
 Here is an example satellite image (11, 12 micron difference image) and corresponding preddiction result.
-![pred](pred.png)
+![result](result.PNG)
 
 ## What I could try next
 It quickly became clear to me when I started this project that detecting contrails with machine learning would be very difficult because human observers struggle to confidently identify contrails. If we the human cannot do it well, then the model will surely also have a hard time. Something that I overlooked is that the human labelers had more infromation than I was giving the model. As I mentioned in the "Creating/Finding Labeled data for training" section, the labelers had "advected aircraft trajectories" to show where contrails could be (if they formed) based on aircraft flight paths to improve there confidence in when labeling clouds contrails. I believe the model would certainly benefit from having this information in the form of another channel. This will mean we cannot detect contrails in (near) real-time since it requires reanalysis windspeed data, but that is not necessary for our purpose of validating forecasting models. 
